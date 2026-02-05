@@ -109,7 +109,17 @@ async function sendTelegramNotification(message, imagePath = null) {
                 await page.getByRole('link', { name: '期限を延長する' }).waitFor({ state: 'visible', timeout: 5000 });
                 await page.getByRole('link', { name: '期限を延長する' }).click();
             } catch (e) {
-                const msg = `⚠️ 用户 ${user.username} 未找到 '期限延长' 按钮。可能无法延长。`;
+                // 检查是否有具体的下一次更新时间提示
+                const bodyText = await page.locator('body').innerText();
+                const match = bodyText.match(/更新をご希望の場合は、(.+?)以降にお試しください。/);
+
+                let msg;
+                if (match && match[1]) {
+                    msg = `⚠️ 用户 ${user.username} 目前无法延期，下次延长时间在：${match[1]}`;
+                } else {
+                    msg = `⚠️ 用户 ${user.username} 未找到 '期限延长' 按钮。可能无法延长。`;
+                }
+
                 console.log(msg);
                 // 保存截图
                 const screenshotPath = `skip_${user.username}.png`;
